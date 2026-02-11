@@ -864,7 +864,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lightsaber
   damage: 50
-  minSwingSpeed: 0.5
+  minSwingSpeed: 1.5
   lightsaberSocket: {fileID: 0}
   lastPosition: {x: 0, y: 0, z: 0}
   currentSpeed: 0
@@ -982,14 +982,6 @@ MonoBehaviour:
     enemiesSummoned: 0
     enemies: []
     deadEnemies: []
-  - enemiesToSummon: 1
-    enemiesSummoned: 0
-    enemies: []
-    deadEnemies: []
-  - enemiesToSummon: 1
-    enemiesSummoned: 0
-    enemies: []
-    deadEnemies: []
   spawnTimer: 0.5
   currentWave: 0
   enemyPrfab: {fileID: 8426247680293070217, guid: 799a2c7bdef84564ca8af80fbb217a4c, type: 3}
@@ -1033,14 +1025,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1132183667}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.27436665, y: -0, z: -0, w: 0.96162516}
-  m_LocalPosition: {x: 0, y: -0.0228, z: 0.0052}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.0293, z: 0.009}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 956448394}
   m_Father: {fileID: 992584877}
-  m_LocalEulerAnglesHint: {x: 31.849, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1617601699
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1092,10 +1084,6 @@ PrefabInstance:
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_Name
       value: XR Device Simulator
-      objectReference: {fileID: 0}
-    - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

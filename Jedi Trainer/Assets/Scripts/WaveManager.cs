@@ -15,6 +15,7 @@ public class WaveManager : MonoBehaviour
     {
         while (currentWave < waves.Count)
         {
+            Debug.Log($"WAVE {currentWave+1}");
             while (waves[currentWave].enemiesSummoned < waves[currentWave].enemiesToSummon)
             {
                 yield return new WaitForSeconds(spawnTimer);
@@ -37,16 +38,5 @@ public class WaveManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        StartCoroutine(Spawn());
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 }
