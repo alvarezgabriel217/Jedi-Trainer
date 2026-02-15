@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class WaveManager : MonoBehaviour
@@ -11,11 +12,17 @@ public class WaveManager : MonoBehaviour
     public GameObject enemyPrfab;
     public GameObject bossPrefab;
 
+    [Header("UI")]
+    public TextMeshProUGUI currentWaveText;
+    public TextMeshProUGUI enemiesLeftText;
+
+
     public IEnumerator Spawn()
     {
         while (currentWave < waves.Count)
         {
             Debug.Log($"WAVE {currentWave+1}");
+            currentWaveText.text = $"Wave: {(currentWave+1).ToString()}";
             while (waves[currentWave].enemiesSummoned < waves[currentWave].enemiesToSummon)
             {
                 yield return new WaitForSeconds(spawnTimer);

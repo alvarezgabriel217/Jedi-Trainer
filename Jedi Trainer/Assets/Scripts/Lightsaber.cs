@@ -4,10 +4,15 @@ public class Lightsaber : MonoBehaviour
 {
     public int damage;
     public float minSwingSpeed = 1.5f;
-    public Transform lightsaberSocket;
     public Vector3 lastPosition;
     public float currentSpeed;
     public bool equipped;
+    public AudioSource audioSource;
+    public AudioClip SaberMove;
+    public AudioClip SaberClash;
+
+    public float SwingCd = 0.25f;
+    public float TimeSinceLastSwing;
 
     private void Start()
     {
@@ -16,14 +21,14 @@ public class Lightsaber : MonoBehaviour
 
     private void Update()
     {
-        //if(equipped)
-        //{
-            currentSpeed = (transform.position - lastPosition).magnitude / Time.deltaTime;
-            lastPosition = transform.position;
+        currentSpeed = (transform.position - lastPosition).magnitude / Time.deltaTime;
+        lastPosition = transform.position;
 
-            //if (currentSpeed < 0.2f) ;
-
-        //}
+        if (currentSpeed > 0.6f && Time.time >= TimeSinceLastSwing + SwingCd)
+        {
+            audioSource.PlayOneShot(SaberMove);
+            TimeSinceLastSwing = Time.time;
+        }
     }
 
     public void OnTriggerEnter(Collider other)
@@ -33,5 +38,6 @@ public class Lightsaber : MonoBehaviour
         if (currentSpeed < minSwingSpeed) return;
 
         other.GetComponent<Enemy>().TakeDamage(damage);
+        audioSource.PlayOneShot(SaberClash);
     }
 }

@@ -20,5 +20,6 @@ public class Wave
         newEnemy.GetComponent<Enemy>().wave = this;
         enemiesSummoned++;
         enemies.Add(newEnemy);
+        WaveManager.instance.enemiesLeftText.text = $"x{enemiesSummoned - deadEnemies.Count}";
     }
 }
