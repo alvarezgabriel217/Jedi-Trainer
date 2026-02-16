@@ -24,8 +24,10 @@ public class Enemy : Character
         wave.deadEnemies.Add(this.gameObject);
         wave.enemies.Remove(this.gameObject);
         animator.SetTrigger("Dead");
+        gameObject.GetComponent<Rigidbody>().useGravity = false;
+        gameObject.GetComponent<Rigidbody>().isKinematic = true;
         gameObject.GetComponent<CapsuleCollider>().enabled = false;
-        agent.enabled = false;
+        agent.isStopped = true;
         attackCollider.enabled = false;
         WaveManager.instance.enemiesLeftText.text = $"x{wave.enemiesSummoned - wave.deadEnemies.Count}";
     }
@@ -55,5 +57,14 @@ public class Enemy : Character
                 lastAttackTime = Time.time;
             }
         }
+    }
+
+    public override void TakeDamage(int damage)
+    {
+        if (GameManager.instance.player.GetComponent<Player>().dualWield)
+        {
+            damage = Hp;
+        }
+        base.TakeDamage(damage);
     }
 }

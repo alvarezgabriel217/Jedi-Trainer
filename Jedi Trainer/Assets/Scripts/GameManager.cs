@@ -25,6 +25,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        if(mode == gameMode.wave) StartCoroutine(WaveManager.instance.Spawn());
+        //if(mode == gameMode.wave && WaveManager.instance) StartCoroutine(WaveManager.instance.Spawn());
     }
 }
