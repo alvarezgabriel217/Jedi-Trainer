@@ -4,10 +4,9 @@ public class RayGun : MonoBehaviour
 {
     [Header("Laser Settings")]
     public GameObject laserPrefab;
+    public GameObject targetPrefab; // The target to aim at
     public float fireIntervalMin = 1.0f;
     public float fireIntervalMax = 3.0f;
-    public float angleMin = -45f;
-    public float angleMax = 45f;
     public float laserDistance = 10f;
     public float laserDuration = 0.2f;
     public float laserSpeed = 20f; // How fast the laser moves
@@ -36,29 +35,34 @@ public class RayGun : MonoBehaviour
 
     private void FireLaser()
     {
-        // Pick a random angle in Z on the enemy's local forward axis
-        float randomZAngle = UnityEngine.Random.Range(angleMin, angleMax);
-        Quaternion rotation = Quaternion.Euler(0f, 0f, randomZAngle);
+        if (laserPrefab == null)
+            return;
 
-        Vector3 direction = rotation * Vector3.right;
+        Vector3 fireOrigin = transform.position;
+        Vector3 direction = Vector3.forward;
+        Quaternion rotation = Quaternion.identity;
 
-        if (laserPrefab != null)
+        if (targetPrefab != null)
         {
-            GameObject laser = Instantiate(laserPrefab, transform.position, rotation);
-
-            // Configure laser to move forward in its local direction
-            LaserMover mover = laser.GetComponent<LaserMover>();
-            if (mover == null)
-            {
-                mover = laser.AddComponent<LaserMover>();
-            }
-            mover.Initialize(direction, laserSpeed, laserDistance, laserDuration);
-
-            Destroy(laser, laserDuration);
+            Vector3 targetPosition = targetPrefab.transform.position;
+            direction = (targetPosition - fireOrigin).normalized;
+            rotation = Quaternion.LookRotation(direction);
         }
+
+        GameObject laser = Instantiate(laserPrefab, fireOrigin, rotation);
+
+        // Configure laser to move toward the target
+        LaserMover mover = laser.GetComponent<LaserMover>();
+        if (mover == null)
+        {
+            mover = laser.AddComponent<LaserMover>();
+        }
+        mover.Initialize(direction, laserSpeed, laserDistance, laserDuration);
+
+        Destroy(laser, laserDuration);
     }
 
-    // Helper component to move the laser forward in its direction
+    // Helper component to move the laser toward its direction
     public class LaserMover : MonoBehaviour
     {
         private Vector3 moveDirection;
