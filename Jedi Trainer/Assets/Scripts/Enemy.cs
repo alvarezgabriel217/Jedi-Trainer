@@ -1,12 +1,15 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Enemy : MonoBehaviour
+public class Enemy : Character
 {
     public NavMeshAgent agent;
     public GameObject target;
     public Wave wave;
+    public Animator animator;
+    public AttackCollider attackCollider;
 
+<<<<<<< HEAD
     // Natural orbit/wander variables
     public float minDistanceFromPlayer = 5f;
     public float maxDistanceFromPlayer = 15f;
@@ -103,10 +106,65 @@ public class Enemy : MonoBehaviour
             agent.SetDestination(currentDestination);
         }
     }
+=======
+    public float attackCooldown = 1f;
+    public float attackRange = 2.0f;
+    float lastAttackTime;
+>>>>>>> 7b4ab9ea8627a2e117d214059a54e60153f6c5cb
 
     public void SetDestination()
     {
         if (GameManager.instance != null && GameManager.instance.player != null)
             agent.SetDestination(GameManager.instance.player.transform.position);
+    }
+
+    public override void Kill()
+    {
+        base.Kill();
+        wave.deadEnemies.Add(this.gameObject);
+        wave.enemies.Remove(this.gameObject);
+        animator.SetTrigger("Dead");
+        gameObject.GetComponent<Rigidbody>().useGravity = false;
+        gameObject.GetComponent<Rigidbody>().isKinematic = true;
+        gameObject.GetComponent<CapsuleCollider>().enabled = false;
+        agent.isStopped = true;
+        attackCollider.enabled = false;
+        WaveManager.instance.enemiesLeftText.text = $"x{wave.enemiesSummoned - wave.deadEnemies.Count}";
+    }
+
+    public void OpenCollider()
+    {
+        attackCollider.OpenCollider();
+    }
+
+    public void CloseCollider()
+    {
+        attackCollider.CloseCollider();
+    }
+
+    void Update()
+    {
+        animator.SetFloat("Speed", agent.velocity.magnitude);
+
+        if(Vector3.Distance(transform.position, GameManager.instance.player.transform.position) <= attackRange)
+        {
+            agent.isStopped = true;
+            transform.rotation = Quaternion.LookRotation(GameManager.instance.player.transform.position - transform.position).normalized;
+
+            if(Time.time >= lastAttackTime + attackCooldown)
+            {
+                animator.SetTrigger("Attack");
+                lastAttackTime = Time.time;
+            }
+        }
+    }
+
+    public override void TakeDamage(int damage)
+    {
+        if (GameManager.instance.player.GetComponent<Player>().dualWield)
+        {
+            damage = Hp;
+        }
+        base.TakeDamage(damage);
     }
 }
