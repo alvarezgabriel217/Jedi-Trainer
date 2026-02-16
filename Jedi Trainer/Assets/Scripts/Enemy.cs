@@ -4,15 +4,14 @@ using UnityEngine.AI;
 public class Enemy : Character
 {
     public NavMeshAgent agent;
-    public GameObject target;
+    public GameObject target; // Should be set to the object to circle around
     public Wave wave;
     public Animator animator;
     public AttackCollider attackCollider;
 
-<<<<<<< HEAD
     // Natural orbit/wander variables
-    public float minDistanceFromPlayer = 5f;
-    public float maxDistanceFromPlayer = 15f;
+    public float minDistanceFromTarget = 5f;
+    public float maxDistanceFromTarget = 15f;
     public float moveIntervalMin = 2f;
     public float moveIntervalMax = 4.5f;
     public float positionNoise = 1.5f; // How much jitter allowed for natural movement
@@ -30,7 +29,7 @@ public class Enemy : Character
     {
         timer += Time.deltaTime;
 
-        if (GameManager.instance != null && GameManager.instance.player != null)
+        if (target != null)
         {
             // If the destination has been reached or it's time for a new move, select a new orbit point
             if ((!agent.pathPending && agent.remainingDistance < 0.5f) || timer >= currentMoveInterval)
@@ -41,12 +40,30 @@ public class Enemy : Character
         }
         else
         {
-            // If player is missing, wander more randomly around current position
+            // If target is missing, wander more randomly around current position
             if ((!agent.pathPending && agent.remainingDistance < 0.5f) || timer >= currentMoveInterval)
             {
                 ChooseRandomWanderDestination();
                 ScheduleNextMove();
             }
+        }
+
+        animator.SetFloat("Speed", agent.velocity.magnitude);
+
+        if (target != null && Vector3.Distance(transform.position, target.transform.position) <= attackRange)
+        {
+            agent.isStopped = true;
+            transform.rotation = Quaternion.LookRotation(target.transform.position - transform.position).normalized;
+
+            if (Time.time >= lastAttackTime + attackCooldown)
+            {
+                animator.SetTrigger("Attack");
+                lastAttackTime = Time.time;
+            }
+        }
+        else
+        {
+            agent.isStopped = false;
         }
     }
 
@@ -58,19 +75,19 @@ public class Enemy : Character
 
     void ChooseSmoothOrbitDestination()
     {
-        if (GameManager.instance == null || GameManager.instance.player == null)
+        if (target == null)
             return;
 
-        Vector3 playerPos = GameManager.instance.player.transform.position;
+        Vector3 targetPos = target.transform.position;
 
         // Random direction with some bias based on current position for smoothness
-        Vector3 toEnemy = (transform.position - playerPos).normalized;
+        Vector3 toEnemy = (transform.position - targetPos).normalized;
         if (toEnemy.sqrMagnitude < 0.1f)
             toEnemy = Random.onUnitSphere;
         Vector3 randomTangent = Vector3.Cross(toEnemy, Vector3.up).normalized;
         randomTangent = Quaternion.AngleAxis(Random.Range(-60f, 60f), Vector3.up) * randomTangent;
 
-        float randomRadius = Random.Range(minDistanceFromPlayer, maxDistanceFromPlayer);
+        float randomRadius = Random.Range(minDistanceFromTarget, maxDistanceFromTarget);
 
         // Add small noise for natural motion
         Vector3 jitter = new Vector3(
@@ -79,7 +96,7 @@ public class Enemy : Character
             Random.Range(-positionNoise, positionNoise)
         );
 
-        Vector3 orbitPos = playerPos + toEnemy * randomRadius;
+        Vector3 orbitPos = targetPos + toEnemy * randomRadius;
         Vector3 candidate = orbitPos + randomTangent * Random.Range(-3f, 3f) + jitter;
 
         NavMeshHit navHit;
@@ -91,31 +108,30 @@ public class Enemy : Character
         else
         {
             // fallback to an outward position
-            agent.SetDestination(playerPos + (toEnemy * randomRadius));
+            agent.SetDestination(targetPos + (toEnemy * randomRadius));
         }
     }
 
     void ChooseRandomWanderDestination()
     {
-        Vector3 randomDirection = Random.insideUnitSphere * maxDistanceFromPlayer;
+        Vector3 randomDirection = Random.insideUnitSphere * maxDistanceFromTarget;
         randomDirection += transform.position;
         NavMeshHit navHit;
-        if (NavMesh.SamplePosition(randomDirection, out navHit, maxDistanceFromPlayer, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(randomDirection, out navHit, maxDistanceFromTarget, NavMesh.AllAreas))
         {
             currentDestination = navHit.position;
             agent.SetDestination(currentDestination);
         }
     }
-=======
+
     public float attackCooldown = 1f;
     public float attackRange = 2.0f;
     float lastAttackTime;
->>>>>>> 7b4ab9ea8627a2e117d214059a54e60153f6c5cb
 
     public void SetDestination()
     {
-        if (GameManager.instance != null && GameManager.instance.player != null)
-            agent.SetDestination(GameManager.instance.player.transform.position);
+        if (target != null)
+            agent.SetDestination(target.transform.position);
     }
 
     public override void Kill()
@@ -142,26 +158,12 @@ public class Enemy : Character
         attackCollider.CloseCollider();
     }
 
-    void Update()
-    {
-        animator.SetFloat("Speed", agent.velocity.magnitude);
-
-        if(Vector3.Distance(transform.position, GameManager.instance.player.transform.position) <= attackRange)
-        {
-            agent.isStopped = true;
-            transform.rotation = Quaternion.LookRotation(GameManager.instance.player.transform.position - transform.position).normalized;
-
-            if(Time.time >= lastAttackTime + attackCooldown)
-            {
-                animator.SetTrigger("Attack");
-                lastAttackTime = Time.time;
-            }
-        }
-    }
-
     public override void TakeDamage(int damage)
     {
-        if (GameManager.instance.player.GetComponent<Player>().dualWield)
+        // Keep this dual wield check to reference the player object:
+        GameObject playerObj = GameManager.instance != null ? GameManager.instance.player : null;
+        Player player = playerObj != null ? playerObj.GetComponent<Player>() : null;
+        if (player != null && player.dualWield)
         {
             damage = Hp;
         }
