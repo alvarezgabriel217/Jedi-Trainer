@@ -11,6 +11,14 @@ public class RayGun : MonoBehaviour
     public float laserDuration = 0.2f;
     public float laserSpeed = 20f; // How fast the laser moves
 
+    [Header("Laser Origin")]
+    public Transform laserOrigin; // Assign this in the inspector to set the 'middle' of the model
+
+    [Header("Collision Settings")]
+    public string clashTag = "ClashObject"; // Tag of the object to trigger sound on collision
+    public AudioClip clashSound; // Assign this in the inspector
+    public float clashVolume = 1.0f;
+
     private float nextFireTime = 0f;
 
     void Start()
@@ -38,7 +46,8 @@ public class RayGun : MonoBehaviour
         if (laserPrefab == null)
             return;
 
-        Vector3 fireOrigin = transform.position;
+        // Use specified laserOrigin if set, else default to transform's center
+        Vector3 fireOrigin = laserOrigin != null ? laserOrigin.position : GetComponent<Renderer>() != null ? GetComponent<Renderer>().bounds.center : transform.position;
         Vector3 direction = Vector3.forward;
         Quaternion rotation = Quaternion.identity;
 
@@ -47,6 +56,16 @@ public class RayGun : MonoBehaviour
             Vector3 targetPosition = targetPrefab.transform.position;
             direction = (targetPosition - fireOrigin).normalized;
             rotation = Quaternion.LookRotation(direction);
+        }
+        else if (laserOrigin != null)
+        {
+            direction = laserOrigin.forward;
+            rotation = laserOrigin.rotation;
+        }
+        else
+        {
+            direction = transform.forward;
+            rotation = transform.rotation;
         }
 
         GameObject laser = Instantiate(laserPrefab, fireOrigin, rotation);
@@ -57,12 +76,21 @@ public class RayGun : MonoBehaviour
         {
             mover = laser.AddComponent<LaserMover>();
         }
-        mover.Initialize(direction, laserSpeed, laserDistance, laserDuration);
+
+        mover.Initialize(
+            direction,
+            laserSpeed,
+            laserDistance,
+            laserDuration,
+            clashTag,
+            clashSound,
+            clashVolume
+        );
 
         Destroy(laser, laserDuration);
     }
 
-    // Helper component to move the laser toward its direction
+    // Helper component to move the laser toward its direction and handle clash sound
     public class LaserMover : MonoBehaviour
     {
         private Vector3 moveDirection;
@@ -71,13 +99,28 @@ public class RayGun : MonoBehaviour
         private float traveled = 0f;
         private float duration;
         private LineRenderer lr;
+        private string clashTag;
+        private AudioClip clashSound;
+        private float clashVolume;
+        private AudioSource audioSource; // For playing sound
 
-        public void Initialize(Vector3 direction, float speed, float distance, float dur)
+        public void Initialize(
+            Vector3 direction,
+            float speed,
+            float distance,
+            float dur,
+            string clashTag = "",
+            AudioClip clashSound = null,
+            float clashVolume = 1.0f
+        )
         {
             moveDirection = direction.normalized;
             moveSpeed = speed;
             maxDistance = distance;
             duration = dur;
+            this.clashTag = clashTag;
+            this.clashSound = clashSound;
+            this.clashVolume = clashVolume;
 
             lr = GetComponent<LineRenderer>();
             if (lr != null)
@@ -85,6 +128,23 @@ public class RayGun : MonoBehaviour
                 lr.SetPosition(0, transform.position);
                 lr.SetPosition(1, transform.position);
             }
+
+            // Setup collider for collision detection
+            Collider col = GetComponent<Collider>();
+            if (col == null)
+            {
+                SphereCollider sc = gameObject.AddComponent<SphereCollider>();
+                sc.isTrigger = true;
+                sc.radius = 0.1f;
+            }
+
+            // Move audio source setup to NOT depend on clashSound being present, so laser always has AudioSource
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+            audioSource.playOnAwake = false;
         }
 
         void Update()
@@ -104,6 +164,20 @@ public class RayGun : MonoBehaviour
 
             if (traveled >= maxDistance)
             {
+                Destroy(gameObject);
+            }
+        }
+
+        void OnTriggerEnter(Collider other)
+        {
+            if (!string.IsNullOrEmpty(clashTag) && other.CompareTag(clashTag))
+            {
+                // Play the clash sound ON THE LASER (not the RayGun) if assigned
+                if (clashSound != null && audioSource != null)
+                {
+                    audioSource.PlayOneShot(clashSound, clashVolume);
+                }
+                // Immediately destroy the laser on collision with the clashObject
                 Destroy(gameObject);
             }
         }
